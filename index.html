@@ -2,103 +2,93 @@
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
-    <title>KH90 | File Upload Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KH90 Community Store</title>
     <style>
-        body { font-family: sans-serif; background: #0d1117; color: white; padding: 20px; text-align: center; }
-        .box { background: #161b22; padding: 30px; border-radius: 15px; max-width: 450px; margin: auto; border: 1px solid #30363d; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #010409; border: 1px solid #30363d; color: white; border-radius: 8px; box-sizing: border-box; }
-        .file-label { display: block; text-align: left; margin-top: 10px; font-size: 14px; color: #8b949e; }
-        button { background: #238636; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
-        #status { margin-top: 15px; font-size: 14px; color: #58a6ff; }
+        :root { --main-red: #ff4757; --dark-bg: #0d1117; --card-bg: #161b22; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--dark-bg); color: white; margin: 0; text-align: center; }
+        
+        header { background: var(--card-bg); padding: 30px; border-bottom: 3px solid var(--main-red); }
+        h1 { margin: 0; color: var(--main-red); letter-spacing: 2px; }
+        .tagline { color: #8b949e; font-size: 14px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 30px; }
+        
+        .card { background: var(--card-bg); border-radius: 15px; padding: 20px; border: 1px solid #30363d; text-align: left; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-color: var(--main-red); }
+        
+        .app-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #58a6ff; }
+        .dev-name { font-size: 13px; color: #8b949e; margin-bottom: 15px; }
+        
+        .btn-download { 
+            background: var(--main-red); color: white; text-decoration: none; 
+            padding: 12px; display: block; text-align: center; border-radius: 8px; 
+            font-weight: bold; transition: 0.2s; 
+        }
+        .btn-download:hover { background: #ff6b81; }
+
+        #loader { padding: 50px; font-size: 18px; color: #58a6ff; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>🚀 KH90 Upload Console</h2>
-    
-    <input type="text" id="appName" placeholder="ਐਪ ਦਾ ਨਾਮ">
-    
-    <label class="file-label">ਫਾਈਲ ਚੁਣੋ (Choose APK or Image):</label>
-    <input type="file" id="fileInput">
-    
-    <p style="font-size: 12px; color: #8b949e;">ਜਾਂ ਸਿੱਧਾ ਲਿੰਕ ਪਾਓ:</p>
-    <input type="text" id="appLink" placeholder="File Link (1GB+)">
+<header>
+    <h1>KH90 STORE</h1>
+    <p class="tagline">Cloud Storage & Games Platform</p>
+</header>
 
-    <button onclick="handleUpload()">PUBLISH TO STORE</button>
-    <div id="status">Ready</div>
-</div>
+<div id="loader">🔄 ਕਲਾਊਡ ਤੋਂ ਗੇਮਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ...</div>
+<div class="grid" id="storeGrid"></div>
 
 <script>
-    const GITHUB_TOKEN = "ਤੁਹਾਡਾ_TOKEN";
-    const REPO_OWNER = "ਤੁਹਾਡਾ_USERNAME";
-    const REPO_NAME = "kh90-store";
-    const DB_PATH = "database.json";
+    // --- ਆਪਣੀ ਸੈਟਿੰਗ ਇੱਥੇ ਭਰੋ ---
+    const REPO_OWNER = "ਤੁਹਾਡਾ_GITHUB_USERNAME"; // ਉਦਾਹਰਨ: kh90-dev
+    const REPO_NAME = "kh90-store";          // ਤੁਹਾਡੀ ਰੈਪੋ ਦਾ ਨਾਮ
+    const FILE_PATH = "database.json";        // ਡਾਟਾ ਵਾਲੀ ਫਾਈਲ
 
-    async function handleUpload() {
-        const fileBtn = document.getElementById('fileInput');
-        const appName = document.getElementById('appName').value;
-        const manualLink = document.getElementById('appLink').value;
-        const status = document.getElementById('status');
-
-        if (!appName) return alert("ਨਾਮ ਭਰੋ!");
-
-        let finalLink = manualLink;
-
-        // ਜੇਕਰ ਯੂਜ਼ਰ ਨੇ ਫਾਈਲ ਚੁਣੀ ਹੈ
-        if (fileBtn.files.length > 0) {
-            status.innerText = "⏳ ਫਾਈਲ GitHub 'ਤੇ ਅਪਲੋਡ ਹੋ ਰਹੀ ਹੈ...";
-            const file = fileBtn.files[0];
-            finalLink = await uploadFileToGithub(file);
-        }
-
-        if (!finalLink) {
-            status.innerText = "❌ ਲਿੰਕ ਨਹੀਂ ਮਿਲਿਆ!";
-            return;
-        }
-
-        // ਸਟੋਰ ਦੇ ਡਾਟਾਬੇਸ (JSON) ਨੂੰ ਅਪਡੇਟ ਕਰਨਾ
-        await updateDatabase(appName, finalLink);
-    }
-
-    // ਫਾਈਲ ਨੂੰ ਸਿੱਧਾ GitHub ਰੈਪੋ ਵਿੱਚ ਅਪਲੋਡ ਕਰਨ ਵਾਲਾ ਫੰਕਸ਼ਨ
-    async function uploadFileToGithub(file) {
-        const reader = new FileReader();
-        return new Promise((resolve, reject) => {
-            reader.onload = async () => {
-                const content = reader.result.split(',')[1]; // Base64 content
-                const fileName = `uploads/${Date.now()}_${file.name}`;
-                const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${fileName}`;
-
-                const res = await fetch(url, {
-                    method: "PUT",
-                    headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message: `Uploaded ${file.name}`,
-                        content: content
-                    })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    resolve(data.content.download_url); // ਸਿੱਧਾ ਡਾਊਨਲੋਡ ਲਿੰਕ ਮਿਲ ਜਾਵੇਗਾ
-                } else {
-                    alert("ਫਾਈਲ ਅਪਲੋਡ ਫੇਲ! (ਸ਼ਾਇਦ ਫਾਈਲ ਬਹੁਤ ਵੱਡੀ ਹੈ)");
-                    resolve(null);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    async function updateDatabase(name, link) {
-        const status = document.getElementById('status');
-        status.innerText = "⏳ ਸਟੋਰ ਅਪਡੇਟ ਹੋ ਰਿਹਾ ਹੈ...";
+    async function fetchApps() {
+        const grid = document.getElementById('storeGrid');
+        const loader = document.getElementById('loader');
         
-        // (ਇੱਥੇ ਪੁਰਾਣਾ JSON ਅਪਡੇਟ ਵਾਲਾ ਕੋਡ ਆਵੇਗਾ...)
-        // ਮੈਂ ਪਹਿਲਾਂ ਵਾਲੇ ਕੋਡ ਵਾਂਗ ਹੀ ਡਾਟਾ ਸੇਵ ਕਰਨਾ ਹੈ
-        status.innerHTML = "✅ ਸਫਲਤਾਪੂਰਵਕ ਪਬਲਿਸ਼ ਹੋ ਗਿਆ!";
+        // GitHub API ਤੋਂ ਡਾਟਾ ਲੈਣਾ
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            // GitHub ਦਾ ਡਾਟਾ Base64 ਵਿੱਚ ਹੁੰਦਾ ਹੈ, ਉਸਨੂੰ ਪੜ੍ਹਨਯੋਗ ਬਣਾਉਣਾ (Decode)
+            const apps = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+
+            loader.style.display = "none";
+            grid.innerHTML = "";
+
+            // ਨਵੀਆਂ ਐਪਸ ਪਹਿਲਾਂ ਦਿਖਾਉਣ ਲਈ (Reverse)
+            apps.reverse().forEach(app => {
+                const card = `
+                    <div class="card">
+                        <div class="app-name">${app.name}</div>
+                        <div class="dev-name">By: ${app.dev || "Unknown"}</div>
+                        <div style="font-size: 11px; color: #8b949e; margin-bottom: 10px;">Published: ${app.date || "N/A"}</div>
+                        <a href="${app.url}" target="_blank" class="btn-download">DOWNLOAD (1GB+)</a>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+
+            if(apps.length === 0) {
+                loader.innerText = "ਅਜੇ ਸਟੋਰ ਵਿੱਚ ਕੋਈ ਗੇਮ ਨਹੀਂ ਹੈ।";
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+            loader.innerText = "❌ ਡਾਟਾ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕਿਆ। GitHub ਸੈਟਿੰਗ ਚੈੱਕ ਕਰੋ।";
+        }
     }
+
+    // ਪੇਜ ਖੁੱਲ੍ਹਦੇ ਹੀ ਗੇਮਾਂ ਲੋਡ ਕਰੋ
+    window.onload = fetchApps;
 </script>
+
 </body>
 </html>
