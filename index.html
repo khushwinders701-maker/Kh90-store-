@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KH90 Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #1f1f1f;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid #00ff88;
+        }
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #00ff88;
+        }
+        
+        .search-container {
+            text-align: center;
+            padding: 20px 10px 0 10px;
+        }
+        #searchInput {
+            padding: 12px 20px;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 25px;
+            border: 2px solid #333;
+            background-color: #1f1f1f;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #searchInput:focus {
+            border-color: #00ff88;
+        }
+
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+        }
+        .app-card {
+            background-color: #1f1f1f;
+            width: 130px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #333;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        /* ਆਈਕੋਨ ਦੀ ਸਹੀ ਸਟਾਈਲ */
+        .app-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            margin: 0 auto 10px auto;
+            background-color: #333;
+            object-fit: cover;
+            display: block;
+            border: none;
+        }
+        .app-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+            height: 35px;
+            overflow: hidden;
+        }
+        .download-btn {
+            background-color: #00ff88;
+            color: #000;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        .download-btn:active {
+            background-color: #00cc6a;
+        }
+        .status-msg {
+            text-align: center;
+            font-size: 16px;
+            color: #00ff88;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop preload="auto">
+        <source src="1.mp3" type="audio/mpeg">
+    </audio>
+
+    <header>
+        <h1>KH90 Store</h1>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="ਐਪਸ ਅਤੇ ਗੇਮਾਂ ਲੱਭੋ..." onkeyup="searchApps()">
+    </div>
+
+    <div class="app-container" id="apps-list">
+        <div class="status-msg" id="loading-status">ਐਪਸ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ...</div>
+    </div>
+
+    <script>
+        function searchApps() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let cards = document.getElementsByClassName('app-card');
+
+            for (let i = 0; i < cards.length; i++) {
+                let title = cards[i].querySelector('.app-title').innerText.toLowerCase();
+                if (title.includes(input)) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+
+        // ਗਾਣਾ ਚਲਾਉਣ ਵਾਲਾ ਸਿਸਟਮ (ਪਹਿਲੇ ਟੱਚ/ਕਲਿੱਕ 'ਤੇ 100% ਚੱਲੇਗਾ)
+        const audio = document.getElementById('bgMusic');
+        
+        function startMusic() {
+            audio.play().catch(err => console.log("Music play delayed until click."));
+            document.removeEventListener('click', startMusic);
+            document.removeEventListener('touchstart', startMusic);
+        }
+        
+        document.addEventListener('click', startMusic);
+        document.addEventListener('touchstart', startMusic);
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAyFSQJSx7SsFYTbfRAEuNxWfeO2jTmw6Q",
+        authDomain: "my-store1-1093c.firebaseapp.com",
+        projectId: "my-store1-1093c",
+        storageBucket: "my-store1-1093c.firebasestorage.app",
+        messagingSenderId: "1095213665187",
+        appId: "1:1095213665187:web:653cd17020c533583ca816",
+        measurementId: "G-01QMD8PT02"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // ਗੂਗਲ ਡਰਾਈਵ ਲਿੰਕ ਵਿੱਚੋਂ 100% ਸਹੀ ਇਮੇਜ ਲਿੰਕ ਬਣਾਉਣ ਵਾਲਾ ਨਵਾਂ ਫੰਕਸ਼ਨ
+      function getDirectDriveLink(url) {
+          if (!url) return null;
+          if (url.includes('drive.google.com')) {
+              const match = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
+              if (match && match[1]) {
+                  // ਇਹ ਨਵਾਂ ਲਿੰਕ ਫਾਰਮੈਟ ਬ੍ਰਾਊਜ਼ਰ ਦੇ ਬਲਾਕਿੰਗ ਸਿਸਟਮ ਨੂੰ ਬਾਈਪਾਸ ਕਰਦਾ ਹੈ
+                  return `https://lh3.googleusercontent.com/d/${match[1]}`;
+              }
+          }
+          return url;
+      }
+
+      async function loadAppsFromFirebase() {
+          const appsListDiv = document.getElementById('apps-list');
+          const loadingStatus = document.getElementById('loading-status');
+          
+          try {
+              const querySnapshot = await getDocs(collection(db, "apps"));
+              
+              if (loadingStatus) loadingStatus.remove();
+
+              if (querySnapshot.empty) {
+                  appsListDiv.innerHTML = "<div class='status-msg'>ਕੋਈ ਐਪ ਨਹੀਂ ਮਿਲੀ।</div>";
+                  return;
+              }
+
+              querySnapshot.forEach((doc) => {
+                  const appData = doc.data();
+                  const appCard = document.createElement('div');
+                  appCard.className = 'app-card';
+                  
+                  // ਇੱਥੇ ਲਿੰਕ ਸਹੀ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ
+                  const finalIconUrl = getDirectDriveLink(appData.iconUrl);
+                  
+                  // ਜੇ ਲਿੰਕ ਸਹੀ ਹੈ ਤਾਂ ਫੋਟੋ, ਨਹੀਂ ਤਾਂ ਡਿਫਾਲਟ ਹਰਾ ਡੱਬਾ
+                  const iconHtml = finalIconUrl 
+                      ? `<img src="${finalIconUrl}" class="app-icon" alt="App Icon" onerror="this.onerror=null; this.src=''; this.style.backgroundColor='#00ff88';">`
+                      : `<div class="app-icon" style="background-color: #00ff88;"></div>`;
+                  
+                  appCard.innerHTML = `
+                      ${iconHtml}
+                      <div class="app-title">${appData.name || 'Unnamed App'}</div>
+                      <button class="download-btn" onclick="window.open('${appData.downloadUrl || '#'}', '_blank')">Install</button>
+                  `;
+                  
+                  appsListDiv.appendChild(appCard);
+              });
+          } catch (error) {
+              console.error("Error fetching apps: ", error);
+              appsListDiv.innerHTML = "<div class='status-msg' style='color: red;'>ਐਪਸ ਲੋਡ ਕਰਨ ਵਿੱਚ ਕੋਈ ਸਮੱਸਿਆ ਆਈ ਹੈ।</div>";
+          }
+      }
+
+      loadAppsFromFirebase();
+    </script>
+
+</body>
+</html>
